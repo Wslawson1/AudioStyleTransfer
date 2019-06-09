@@ -9,6 +9,10 @@ import math
 # This code is based on code by Dmitry Uylanov. Much of this code is simply a refactoring of Uylanovs code.
 # This algorithm improves slightly upon Uylanov's method by implementing ideas from Eric Grinstein et al, along with a few improvements
 # discovered by myself (Wesley Slawson) and a few collaborators (Domenic Cusanelli, Jonathan Satterfield, Matthew Crow).
+# Contributions:
+# Wesley Slawson: refactoring of Uylanov code, discovery of all improvements, and implementation of all improvements (excepting the kernel filter)
+# Jonathan Satterfield: implementation of kernel filter (filter_limiter method)
+# Domenic Cusanelli, Matthew Crow: General help with project research
 #
 # The improvements made on the Uylanov algorithm are described on the Github Page for this project, which can be found at
 # https://wslawson1.github.io/AudioStyleTransfer/
