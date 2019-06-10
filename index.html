@@ -1,1 +1,79 @@
-<h1> This is my index page </h1>
+<!DOCTYPE html>
+<html>
+<head>
+<title>Audio Style Transfer</title>
+<link rel="stylesheet" type="text/css" href="AudioStyleTransferStyle.css">
+</head>
+<body>
+<h1 id="title">Improvements on Audio Style Transfer</h1>
+<h3 id="title">by: Wesley Slawson </h3>
+<h2 class="setionHeader" >
+Background
+</h2>
+<span class="section">
+<p>
+The 2015 paper by Gatys et al.\ describes a process for generating images with the "style" of one image, and the content of another. First, the images are processed by a convolutional neural network which has been trained for image recognition. Then, statistics are computed on the net for each image. For the style image, a style statistic is used. For the content image, a content statistic is used. Next, the same network is given white noise as input, and activations are backpropogated to the input in order to minimize a loss function which accounts for style loss and content loss. This results in an image which retains the the structural organization of the content image, but exhibits the global textural quality of the style image.
+</p>
+
+<p>
+Our project takes concepts from Gatys, and attempts to apply them to the audio domain. This task has been of particular interest to neural network enthusiasts, especially in recent years. Initial attempts at applying this algorithm to the audio domain produced very poor results. More recently, new techniques have arisen and adjustments have been made, resulting in significant improvements in quality. Still, the quality of output audio is generally quite low. Samples frequently have high signal to noise ratios and exhibit many undesirable artifacts.
+Our project seeks to improve on the methods proposed by Uylanov, who has produced some of the more convincing results related to this task.
+</p>
+</span>
+
+<h2 class="sectionHeader">
+Uylanov Method
+</h2>
+
+<span class="section">
+<p>
+Uylanov’s audio style transfer algorithm works in the following way:<br>
+First, two audio samples are loaded, and one of the samples is truncated so as to match the size of the other. The samples are then converted to a spectrogram. Next, the spectrograms are fed into a convolutional neural network with 4096 random filters which convolve only along the temporal axis. This generates feature maps for both the style and content audio. The feature maps are then each used to compute gram matrices for their respective samples. The equation for the computation of gram matrices is as follows:
+</p>
+<h2 style="text-align:center"> INSERT EQUATION HERE </h2>
+<p>
+Next, a matrix, N, with the same shape as the content audio spectrogram is created and initialized with white noise. This matrix is then fed into the neural network and its feature maps and gram matrices are computed. The input matrix is then optimized using a two-fold loss function, where Style Loss is the mean squared error between the style gram matrix and the gram matrix of the noise matrix N, and content loss is the mean squared error between the feature map of matrix N and the feature map of the original content audio.
+Activations are backpropogated all the way to the input noise matrix at each step of the optimization process, allowing the noise to incrementally take on the shape of the content audio and the textural qualities of the style audio.
+Finally, the time series of the resultant spectrogram is computed using the Griffin Lim phase reconstruction algorithm.<p>
+
+</span>
+
+<h2 class="sectionHeader"> Improving the Uylanov Algorithm </h2>
+
+<span class="section">
+<p>
+The first improvement to the Uylanov code comes from the 2017 Grinstein et al.\ paper. In the Uylanov implementation, white noise is used as the starting point for iterative optimization. Grinstein proposes the idea that, to better preserve audio content, the content audio should be used as the starting point for iteration. Additionally, Grinstein suggests that only the style loss need be considered when optimizing starting from the content audio. Grinstein claims that content structure is still preserved using this process even though the content loss function is not utilized. For our project, we found that the best output resulted from beginning the optimization with content audio, but still using a two-fold loss function. This change results in significant improvement to the fidelity of output audio. There is less noise in the signal and a reduced number of undesirable anomalous artifacts. Additionally, Uylanov’s implementation employs a content loss weight variable which enables the user of the system to specify the degree to which content loss is considered in the optimization algorithm. We found this variable quite useful for fine-tuning the outputs of the program.
+</p>
+
+<p>
+We observed that in the Uylanov model, a spectrogram with an fft window of size 2048 and a hop length of 512 was used as input for feature extraction. The resulting spectrogram contains only 1025 frequency bins. This corresponds to a frequency resolution of 21.5hz at the standard sample rate of 44100. For the purposes of manipulating a spectrogram, and then invert it into a time series, this level of frequency resolution is too low to produce high-fidelity results. Changes to the value of a frequency bin are not nearly localized enough. To put this in perspective, at a resolution of 21.5hz, one frequency bin contains almost the entirety of energy information about the octave from F0 to F1.
+</p>
+
+<p>
+To improve the frequency resolution, a higher fft window size is required. However, this comes at the cost of temporal fidelity. We observed that, in general, important temporal features of the content audio, such as transients, are preserved only when the input spectrograms contain ~300 samples or greater. Lower temporal resolutions lose separation between individual consecutive sound sources. To increase temporal resolution while retaining the improvements in frequency resolution, a smaller hop size is required. These improvements to the spectrogram generation radically increase the quality of output, but come at the cost of much higher optimization times.
+</p>
+<p>
+To mitigate the incurred optimization time costs, we observe that the maximum number of optimization iterations used in the Uylanov model is unnecessarily large. Uylanov uses a maximum iteration number of 300. In general, the optimizer converges on acceptable outputs by iteration 150. Increasing the maximum iteration number above 200 produces only very marginal gains in output quality. Thus, a maximum iteration number between 150 and 200 is used, depending on the size of the spectrogram, in order to ensure that computations complete in a reasonable amount of time on a CPU.
+</p>
+
+<p>
+We observed that for our samples, especially pure instrumental samples, frequencies outside of the fundamental pitch were generally harmonics and overtones of the fundamental pitch. We recognized that because of this, random filters were likely picking up some values that either did not have any effect on the sound of the audio or were directly related to a value which was already detected. As an improvement, our code uses restricted random filters such that random values only populate the filters within a discrete number of octaves, with values outside that range being zero or a small constant. The intended effect of this is that the filters will primarily pick up information either within a single octave, of which the loudest frequencies are then directly related to every other octave, or among two or three octaves, in which the information concerns how the frequencies are related. Overall, information about the fundamental frequencies and overtones would have a greater effect on the convolution than it would using the pure random filters. We found that results produced with these limited filters were of as good or better quality than results produced with complete random filters as in the Ulyanov model.
+</p>
+<p>
+    Additionally, we observed that the kernel width of 11 chosen by Uylanov was likely arbitrary. Lower kernel width values tend to produce output which more accurately preserves the global and local structure of the content. Additionally, lower kernel widths produce final loss values which tend to be significantly lower than the final loss values using a higher kernel widths, all other parameters being the same. However, there is some loss in frequency quality associated with lower kernel widths, especially in the higher frequency ranges. This loss in quality does not appear to become audible until the kernel width is below 5. Thus, a kernel width of 5 is used. <br>
+</p>
+
+<h2 class="sectionHeader"> Conclusion </h2>
+
+<span class="section">
+<p>
+    The style transfer algorithm described by Gatys is difficult to accurately apply in the audio domain. The efforts by Uylanov and Grinstein were massive leaps forward in this endeavor. However, aurally pleasing results are still very rare. High levels of noise, strange digital artifacts, and degraded signal quality abound in the outputs of the current methods. The complexity inherent in any digital signal processing task proves to be a significant roadblock to desirable output. A large variety of parameters determine the shape and quality of a spectrogram. It is difficult to determine how each of these parameters interact in affecting the overall output of the system. Additionally, “style” and “content” are not clearly defined in the audio domain. Elements of “style” can sometimes be integral to the “content” of an audio signal, and vice versa. Because of this, it is difficult to understand exactly how and why the convolutional neural network approach works. As a result, it is difficult to design neural networks which properly carry out the task of encoding the style of audio signals.
+</p>
+<p>
+    Our investigation into these problems led us to a number of findings which allow for significantly improved results. Using the content signal as the starting point for iteration reduces the level of noise and increases the level of preservation of content in the output signal. Additionally, in contrast to the Grinstein method, content loss is still utilized to further preserve content. To improve frequency fidelity, larger FFT window sizes must be used in the generation of spectrograms. This increase in FFT window size necessarily reduces the temporal fidelity. To combat this, the hop length is reduced. Both of these improvements to the fidelity of the spectrogram result in increased optimization times. This effect can be mitigated without significant loss in quality by reducing the maximum number of iterations in the optimization process. Finally, careful filter design can help to produce higher quality results.
+</p>
+</span>
+
+</body>
+</html> 
+

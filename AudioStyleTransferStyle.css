@@ -1,0 +1,16 @@
+.section p{
+  text-indent: 70px;
+  line-height: 30px;
+}
+
+body {
+  background-color: #E4F0D0;
+  padding-left: 375px;
+  padding-right: 375px;
+  line-height: 50px;
+  
+}
+
+#title {
+  text-align: center;
+}
