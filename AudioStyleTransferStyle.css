@@ -14,3 +14,14 @@ body {
 #title {
   text-align: center;
 }
+
+.audioExampleFile {
+  padding: 0px;
+  margin: 0px;
+}
+
+.audioExample {
+  display: inline-block;
+  padding: 0px;
+margin: 0px;
+}

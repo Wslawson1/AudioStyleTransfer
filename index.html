@@ -44,12 +44,12 @@ Finally, the time series of the resultant spectrogram is computed using the Grif
 <p>
 The first improvement to the Uylanov code comes from the 2017 Grinstein et al.\ paper. In the Uylanov implementation, white noise is used as the starting point for iterative optimization. Grinstein proposes the idea that, to better preserve "content" audio, the content time series should be used as the starting point for iteration. Additionally, Grinstein suggests that only the style loss need be considered when optimizing starting from the content audio. Grinstein claims that content structure is still preserved using this process even though the content loss function is not utilized. For our project, we found that the best output resulted from beginning the optimization with content audio, but still using a two-fold loss function. This change results in significant improvement to the fidelity of output audio. There is less noise in the signal and a reduced number of undesirable anomalous artifacts. Additionally, Uylanov’s implementation employs a content loss weight variable which enables the user of the system to specify the degree to which content loss is considered in the optimization algorithm. We found this variable quite useful for fine-tuning the outputs of the program.
 </p>
-
+<span class="figureBox">
 <figure class="audioExample">
-<figcaption> cello </figcaption>
+<figcaption> Piano </figcaption>
 <audio
 	controls
-	src="https://raw.githubusercontent.com/Wslawson1/AudioStyleTransfer/master/outputAudio/cello-arco-A2.mp3">
+	src="https://raw.githubusercontent.com/Wslawson1/AudioStyleTransfer/master/outputAudio/PianoChords.wav" class="audioExampleFile">
 your browser does not support this file
 </audio>
 </figure>
@@ -57,11 +57,47 @@ your browser does not support this file
 <figcaption> hand drums </figcaption>
 <audio
 	controls
-	src="https://raw.githubusercontent.com/Wslawson1/AudioStyleTransfer/master/outputAudio/HandPercussion.wav">
+	src="https://raw.githubusercontent.com/Wslawson1/AudioStyleTransfer/master/outputAudio/HandPercussion.wav" class="audioExampleFile">
+your browser does not support this file
+</audio>
+</figure>
+<br>
+
+<figure class="audioExample">
+<figcaption> hand drums </figcaption>
+<audio
+	controls
+	src="https://raw.githubusercontent.com/Wslawson1/AudioStyleTransfer/master/outputAudio/HandPercussion.wav" class="audioExampleFile">
 your browser does not support this file
 </audio>
 </figure>
 
+<figure class="audioExample">
+<figcaption> Piano x Drums @ n_fft: 1024 </figcaption>
+<audio
+	controls
+	src="https://raw.githubusercontent.com/Wslawson1/AudioStyleTransfer/master/outputAudio/S7S3__HandPercussionXPianoChordsnfft1024_hl256_filt4096alpha0.01_itr300.wav" class="audioExampleFile">
+your browser does not support this file
+</audio>
+</figure>
+<figure class="audioExample">
+<figcaption> Piano x Drums @ n_fft: 2048 </figcaption>
+<audio
+	controls
+	src="https://raw.githubusercontent.com/Wslawson1/AudioStyleTransfer/master/outputAudio/S7S3__HandPercussionXPianoChordsnfft2048_hl256_filt4096alpha0.01_itr300.wav" class="audioExampleFile">
+your browser does not support this file
+</audio>
+</figure>
+<figure class="audioExample">
+<figcaption> Piano x Drums @ n_fft: 4096 </figcaption>
+<audio
+	controls
+	src="https://raw.githubusercontent.com/Wslawson1/AudioStyleTransfer/master/outputAudio/S7S3__HandPercussionXPianoChordsnfft4096_hl256_filt4096alpha0.01_itr300.wav" class="audioExampleFile">
+your browser does not support this file
+</audio>
+</figure>
+
+<span class="figureBox">
 <p>
 We observed that in the Uylanov model, a spectrogram with an fft window of size 2048 and a hop length of 512 was used as input for feature extraction. The resulting spectrogram contains only 1025 frequency bins. This corresponds to a frequency resolution of 21.5hz at the standard sample rate of 44100. For the purposes of manipulating a spectrogram, and then invert it into a time series, this level of frequency resolution is too low to produce high-fidelity results. Changes to the value of a frequency bin are not nearly localized enough. To put this in perspective, at a resolution of 21.5hz, one frequency bin contains almost the entirety of energy information about the octave from F0 to F1.
 </p>
