@@ -45,3 +45,7 @@ box-shadow: 7px 7px;
 padding: 10px;
 }
 
+.equation {
+position: relative;
+left: 40%;
+}
