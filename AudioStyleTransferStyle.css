@@ -49,3 +49,7 @@ padding: 10px;
 position: relative;
 left: 40%;
 }
+
+ul {
+line-height: 30px;
+}
