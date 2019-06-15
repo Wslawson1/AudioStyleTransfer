@@ -10,6 +10,7 @@
 <h2 class="setionHeader" >
 Background
 </h2>
+
 <span class="section">
 <p>
 The 2015 paper by Gatys et al. describes a process for generating images with the "style" of one image, and the content of another. First, the images are processed by a convolutional neural network which has been trained for image recognition. Then, statistics are computed on the net for each image. For the style image, a style statistic is used. For the content image, a content statistic is used. Next, the same network is given white noise as input, and activations are backpropogated to the input in order to minimize a loss function which accounts for style loss and content loss. This results in an image which retains the the structural organization of the content image, but exhibits the global textural quality of the style image.
@@ -35,16 +36,24 @@ First, two audio samples are loaded, and one of the samples is truncated so as t
 Next, a matrix, N, with the same shape as the content audio spectrogram is created and initialized with white noise. This matrix is then fed into the neural network and its feature maps and gram matrices are computed. The input matrix is then optimized using a two-fold loss function, where Style Loss is the mean squared error between the style gram matrix and the gram matrix of the noise matrix N, and content loss is the mean squared error between the feature map of matrix N and the feature map of the original content audio.
 Activations are backpropogated all the way to the input noise matrix at each step of the optimization process, allowing the noise to incrementally take on the shape of the content audio and the textural qualities of the style audio.
 Finally, the time series of the resultant spectrogram is computed using the Griffin Lim phase reconstruction algorithm.<p>
-
 </span>
 
 <h2 class="sectionHeader"> Improving the Uylanov Algorithm </h2>
 
 <span class="section">
 <p>
-The first improvement to the Uylanov code comes from the 2017 Grinstein et al.\ paper. In the Uylanov implementation, white noise is used as the starting point for iterative optimization. Grinstein proposes the idea that, to better preserve "content" audio, the content time series should be used as the starting point for iteration. Additionally, Grinstein suggests that only the style loss need be considered when optimizing starting from the content audio. Grinstein claims that content structure is still preserved using this process even though the content loss function is not utilized. For our project, we found that the best output resulted from beginning the optimization with content audio, but still using a two-fold loss function. This change results in significant improvement to the fidelity of output audio. There is less noise in the signal and a reduced number of undesirable anomalous artifacts. Additionally, Uylanov’s implementation employs a content loss weight variable which enables the user of the system to specify the degree to which content loss is considered in the optimization algorithm. We found this variable quite useful for fine-tuning the outputs of the program.
+The first improvement to the Uylanov code comes from the 2017 Grinstein et al. paper. In the Uylanov implementation, white noise is used as the starting point for iterative optimization. Grinstein proposes the idea that, to better preserve "content" audio, the content time series should be used as the starting point for iteration. Additionally, Grinstein suggests that only the style loss need be considered when optimizing starting from the content audio. Grinstein claims that content structure is still preserved using this process even though the content loss function is not utilized. For our project, we found that the best output resulted from beginning the optimization with content audio, but still using a two-fold loss function. This change results in significant improvement to the fidelity of output audio. There is less noise in the signal and a reduced number of undesirable anomalous artifacts. Additionally, Uylanov’s implementation employs a content loss weight variable which enables the user of the system to specify the degree to which content loss is considered in the optimization algorithm. We found this variable quite useful for fine-tuning the outputs of the program.
 </p>
-<span class="figureBox">
+
+<p>
+We observed that in the Uylanov model, a spectrogram with an fft window of size 2048 and a hop length of 512 was used as input for feature extraction. The resulting spectrogram contains only 1025 frequency bins. This corresponds to a frequency resolution of 21.5hz at the standard sample rate of 44100. For the purposes of manipulating a spectrogram, and then inverting it into a time series, this level of frequency resolution is too low to produce high-fidelity results. Changes to the value of a frequency bin are not nearly localized enough. To put this in perspective, at a resolution of 21.5hz, one frequency bin contains almost the entirety of energy information about the octave from F0 to F1.
+To improve the frequency resolution, a higher fft window size is required. However, this comes at the cost of temporal fidelity. 
+</p>
+
+<br>
+</span>
+
+<div class="figureBox">
 <figure class="audioExample">
 <figcaption> Piano </figcaption>
 <audio
@@ -63,20 +72,11 @@ your browser does not support this file
 </figure>
 <br>
 
-<figure class="audioExample">
-<figcaption> hand drums </figcaption>
-<audio
-	controls
-	src="https://raw.githubusercontent.com/Wslawson1/AudioStyleTransfer/master/outputAudio/HandPercussion.wav" class="audioExampleFile">
-your browser does not support this file
-</audio>
-</figure>
 
 <figure class="audioExample">
 <figcaption> Piano x Drums @ n_fft: 1024 </figcaption>
-<audio
-	controls
-	src="https://raw.githubusercontent.com/Wslawson1/AudioStyleTransfer/master/outputAudio/S7S3__HandPercussionXPianoChordsnfft1024_hl256_filt4096alpha0.01_itr300.wav" class="audioExampleFile">
+<audio controls>
+<source src="https://vocaroo.com/media_command.php?media=s1Cz2eU4THbx&command=download_mp3">
 your browser does not support this file
 </audio>
 </figure>
@@ -84,7 +84,7 @@ your browser does not support this file
 <figcaption> Piano x Drums @ n_fft: 2048 </figcaption>
 <audio
 	controls
-	src="https://raw.githubusercontent.com/Wslawson1/AudioStyleTransfer/master/outputAudio/S7S3__HandPercussionXPianoChordsnfft2048_hl256_filt4096alpha0.01_itr300.wav" class="audioExampleFile">
+	src="https://vocaroo.com/media_command.php?media=s1LUN3cWhn44&command=download_mp3" class="audioExampleFile">
 your browser does not support this file
 </audio>
 </figure>
@@ -92,19 +92,50 @@ your browser does not support this file
 <figcaption> Piano x Drums @ n_fft: 4096 </figcaption>
 <audio
 	controls
-	src="https://raw.githubusercontent.com/Wslawson1/AudioStyleTransfer/master/outputAudio/S7S3__HandPercussionXPianoChordsnfft4096_hl256_filt4096alpha0.01_itr300.wav" class="audioExampleFile">
+	src="https://vocaroo.com/media_command.php?media=s1hDJVJBhrnp&command=download_mp3" class="audioExampleFile">
 your browser does not support this file
 </audio>
 </figure>
 
-<span class="figureBox">
-<p>
-We observed that in the Uylanov model, a spectrogram with an fft window of size 2048 and a hop length of 512 was used as input for feature extraction. The resulting spectrogram contains only 1025 frequency bins. This corresponds to a frequency resolution of 21.5hz at the standard sample rate of 44100. For the purposes of manipulating a spectrogram, and then invert it into a time series, this level of frequency resolution is too low to produce high-fidelity results. Changes to the value of a frequency bin are not nearly localized enough. To put this in perspective, at a resolution of 21.5hz, one frequency bin contains almost the entirety of energy information about the octave from F0 to F1.
-</p>
 
+<p class="caption"> First Row: original samples </p>
+<p class="caption"> Second Row: Stylized samples varying in fft window size. (proportion of window size to hop length remains constant)</p>
+</div>
+
+<br>
+<span class="section">
 <p>
-To improve the frequency resolution, a higher fft window size is required. However, this comes at the cost of temporal fidelity. We observed that, in general, important temporal features of the content audio, such as transients, are preserved only when the input spectrograms contain ~300 samples or greater. Lower temporal resolutions lose separation between individual consecutive sound sources. To increase temporal resolution while retaining the improvements in frequency resolution, a smaller hop size is required. These improvements to the spectrogram generation radically increase the quality of output, but come at the cost of much higher optimization times.
+We observed that, in general, important temporal features of the content audio, such as transients, are preserved only when the input spectrograms contain ~300 samples or greater. Lower temporal resolutions lose separation between individual consecutive sound sources. To increase temporal resolution while retaining the improvements in frequency resolution, a smaller hop size is required. These improvements to the spectrogram generation radically increase the quality of output, but come at the cost of much higher optimization times.
 </p>
+<br>
+<div class="figureBox">
+<figure class="audioExample">
+<figcaption> Piano x Drums @ hop_length: 1024 </figcaption>
+<audio controls>
+<source src="https://vocaroo.com/media_command.php?media=s1UxFXPC0Iu2&command=download_mp3">
+your browser does not support this file
+</audio>
+</figure>
+<figure class="audioExample">
+<figcaption> Piano x Drums @ hop_length: 512 </figcaption>
+<audio
+	controls
+	src="https://vocaroo.com/media_command.php?media=s0Gx9kMCrO7F&command=download_mp3" class="audioExampleFile">
+your browser does not support this file
+</audio>
+</figure>
+<figure class="audioExample">
+<figcaption> Piano x Drums @ hop_length: 64 </figcaption>
+<audio
+	controls
+	src="https://vocaroo.com/media_command.php?media=s1JjoL4Vqxga&command=download_mp3" class="audioExampleFile">
+your browser does not support this file
+</audio>
+</figure>
+<p class="caption"> Note the improvement in the preservation of temporal features from the content audio as we decrease hop length </p>
+</div>
+
+<br>
 <p>
 To mitigate the incurred optimization time costs, we observe that the maximum number of optimization iterations used in the Uylanov model is unnecessarily large. Uylanov uses a maximum iteration number of 300. In general, the optimizer converges on acceptable outputs by iteration 150. Increasing the maximum iteration number above 200 produces only very marginal gains in output quality. Thus, a maximum iteration number between 150 and 200 is used, depending on the size of the spectrogram, in order to ensure that computations complete in a reasonable amount of time on a CPU.
 </p>
@@ -112,9 +143,90 @@ To mitigate the incurred optimization time costs, we observe that the maximum nu
 <p>
 We observed that for our samples, especially pure instrumental samples, frequencies outside of the fundamental pitch were generally harmonics and overtones of the fundamental pitch. We recognized that because of this, random filters were likely picking up some values that either did not have any effect on the sound of the audio or were directly related to a value which was already detected. As an improvement, our code uses restricted random filters such that random values only populate the filters within a discrete number of octaves, with values outside that range being zero or a small constant. The intended effect of this is that the filters will primarily pick up information either within a single octave, of which the loudest frequencies are then directly related to every other octave, or among two or three octaves, in which the information concerns how the frequencies are related. Overall, information about the fundamental frequencies and overtones would have a greater effect on the convolution than it would using the pure random filters. We found that results produced with these limited filters were of as good or better quality than results produced with complete random filters as in the Ulyanov model.
 </p>
+
+<div class="figureBox">
+
+<figure class="audioExample">
+<figcaption> Clarinet Trill </figcaption>
+<audio
+	controls
+	src="https://raw.githubusercontent.com/Wslawson1/AudioStyleTransfer/master/outputAudio/clarinet-trill-B4.mp3" class="audioExampleFile">
+your browser does not support this file
+</audio>
+</figure>
+<figure class="audioExample">
+<figcaption> Cello arco </figcaption>
+<audio
+	controls
+	src="https://raw.githubusercontent.com/Wslawson1/AudioStyleTransfer/master/outputAudio/cello-arco-A2.mp3" class="audioExampleFile">
+your browser does not support this file
+</audio>
+</figure>
+<br>
+
+<figure class="audioExample">
+<figcaption> Clarinet x Cello without Kernel Filter</figcaption>
+<audio
+	controls
+	src="https://raw.githubusercontent.com/Wslawson1/AudioStyleTransfer/master/outputAudio/Clarinet-as-cello-4096-16-1s.wav" class="audioExampleFile">
+your browser does not support this file
+</audio>
+</figure>
+
+<figure class="audioExample">
+<figcaption> Clarinet x Cello with Kernel Filter</figcaption>
+<audio
+	controls
+	src="https://raw.githubusercontent.com/Wslawson1/AudioStyleTransfer/master/outputAudio/S13S1__Clarinet_as_cello_4096_16_FILTERS.wav" class="audioExampleFile">
+your browser does not support this file
+</audio>
+</figure>
+
+<p class="caption"> Although it is subtle, you can hear that the kernel filter increases fidelity in both the frequency and time domains</p>
+<p class="caption"> The following spectograms demonstrate the improved accuracy in preserving the clarinet's trill.</p>
+
+<figure class="imgExample">
+<img src="https://raw.githubusercontent.com/Wslawson1/AudioStyleTransfer/master/outputImg/NOFILTERex.png" alt="no filter example">
+
+<img src="https://raw.githubusercontent.com/Wslawson1/AudioStyleTransfer/master/outputImg/FILTERex.png" alt="filter example ">
+</figure>
+<p class="caption"> first: spectogram set for clarinet x cello style transfer without kernel filter</p>
+<p class="caption"> second: spectogram set for clarinet x cello style transfer without with kernel filter</p>
+
+</div>
+
+
 <p>
     Additionally, we observed that the kernel width of 11 chosen by Uylanov was likely arbitrary. Lower kernel width values tend to produce output which more accurately preserves the global and local structure of the content. Additionally, lower kernel widths produce final loss values which tend to be significantly lower than the final loss values using a higher kernel widths, all other parameters being the same. However, there is some loss in frequency quality associated with lower kernel widths, especially in the higher frequency ranges. This loss in quality does not appear to become audible until the kernel width is below 5. Thus, a kernel width of 5 is used. <br>
 </p>
+</span>
+
+<div class="figureBox">
+<figure class="audioExample">
+<figcaption> Piano x Drums @ kw: 11</figcaption>
+<audio controls>
+<source src="https://vocaroo.com/media_command.php?media=s0CTKlgYmHgT&command=download_mp3">
+your browser does not support this file
+</audio>
+</figure>
+<figure class="audioExample">
+<figcaption> Piano x Drums @ kw: 5 </figcaption>
+<audio
+	controls
+	src="https://vocaroo.com/media_command.php?media=s1bHQcF4Oxrf&command=download_mp3" class="audioExampleFile">
+your browser does not support this file
+</audio>
+</figure>
+<figure class="audioExample">
+<figcaption> Piano x Drums @ kw: 1</figcaption>
+<audio
+	controls
+	src="https://vocaroo.com/media_command.php?media=s0AA9oDcgdYS&command=download_mp3" class="audioExampleFile">
+your browser does not support this file
+</audio>
+</figure>
+<p class="caption"> Increasing kernel width sharpens temporal content. (n_fft = 2048 for all examples) </p>
+</div>
 
 <h2 class="sectionHeader"> Conclusion </h2>
 

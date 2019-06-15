@@ -7,7 +7,7 @@ body {
   background-color: #E4F0D0;
   padding-left: 375px;
   padding-right: 375px;
-  line-height: 50px;
+
   
 }
 
@@ -25,3 +25,23 @@ body {
   padding: 0px;
 margin: 0px;
 }
+
+.caption {
+ text-indent: 0;
+ font-size: 10pt;
+}
+
+.figureBox {
+width: 85%;
+position: relative;
+left: 100px;
+border-style: solid;
+border-width: 2px;
+background-color: #F2F7EA;
+box-shadow: 7px 7px;
+}
+
+.audioExample {
+padding: 10px;
+}
+
